@@ -3,7 +3,7 @@ const axios = require("axios");
 var express = require("express");
 var router = express.Router();
 var bodyParser = require("body-parser");
-const { validationResult } = require('express-validator');
+const { validationResult } = require("express-validator");
 
 // ---------------Controllers--------
 const testnetApi = require("../controllers/testnetApi");
@@ -55,14 +55,14 @@ router.put("/deposit", middlewares.verifyToken, async (req, res) => {
     console.log(req.user);
     const find = await User.findOne({ email: req.user.email });
     // console.log(find);
-          const deposit = new UserWithdrawal({
-              amount: amount,
-              transType: "deposit",
-            });
-            find.transactions.push(deposit);
-            await find.save();
-            deposit.userId.push(find);
-            await deposit.save();
+    const deposit = new UserWithdrawal({
+      amount: amount,
+      transType: "deposit",
+    });
+    find.transactions.push(deposit);
+    await find.save();
+    deposit.userId.push(find);
+    await deposit.save();
     const updatedUser = await User.findOneAndUpdate(
       {
         _id: req.user.userId,
@@ -108,53 +108,59 @@ router.put("/deposit", middlewares.verifyToken, async (req, res) => {
 //     });
 // });
 
-router.post("/adminlogin",async (req, res) => {
+router.post("/adminlogin", async (req, res) => {
   const errors = validationResult(req);
 
   if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+    return res.status(400).json({ errors: errors.array() });
   }
 
   try {
-      const { email, password } = req.body;
+    const { email, password } = req.body;
 
-      // Find the user by email
-      const admin = await Admin.findOne({ email });
+    // Find the user by email
+    const admin = await Admin.findOne({ email });
 
-      if (!admin) {
-          return res.status(401).json({ message: 'Invalid credentials' });
+    if (!admin) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    // Check if the provided password matches the hashed password in the database
+
+    if (admin.password !== password) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    // Generate a JWT token with the user's ID as the payload
+    const token = jwt.sign(
+      { userId: admin._id, email: admin.email, role: "admin" },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "3h", // Token expires in 1 hour (adjust as needed)
       }
+    );
 
-      // Check if the provided password matches the hashed password in the database
-      
+    // Saving token in the user document
+    admin.token = token;
+    await admin.save();
 
-      if (admin.password !== password) {
-          return res.status(401).json({ message: 'Invalid credentials' });
-      }
-
-      // Generate a JWT token with the user's ID as the payload
-      const token = jwt.sign(
-          { userId: admin._id, email: admin.email },
-          process.env.JWT_SECRET,
-          {
-              expiresIn: '3h', // Token expires in 1 hour (adjust as needed)
-          }
-      );
-
-      // Saving token in the user document
-      admin.token = token;
-      await admin.save();
-
-      return res
-          .status(200)
-          .json({ message: 'User login successful!', token,  adminId: admin._id, email: admin.email,role:"admin"});
+    return res
+      .status(200)
+      .json({
+        message: "User login successful!",
+        token,
+        adminId: admin._id,
+        email: admin.email,
+        role: "admin",
+      });
   } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: 'Internal Server Error' });
+    console.error(error);
+    res.status(500).json({ message: "Internal Server Error" });
   }
-})
+});
 
 router.post("/updaterate", middlewares.verifyToken, async (req, res) => {
+  console.log(req.user);
   if (req.user.role === "admin") {
     const updateRate = await Rate.findOneAndUpdate(
       { role: req.body.role },
@@ -489,14 +495,14 @@ router.post("/withdrawalstatus", async (req, res) => {
   }
 });
 
-router.get("/getuserdetails",async(req,res)=>{
-  const find=await User.findOne({email:req.query.email})
-  res.send(find)
-})
-router.get("/getrate",async(req,res)=>{
-  const find=await Rate.findOne({})
-  res.send(find)
-})
+router.get("/getuserdetails", async (req, res) => {
+  const find = await User.findOne({ email: req.query.email });
+  res.send(find);
+});
+router.get("/getrate", async (req, res) => {
+  const find = await Rate.findOne({});
+  res.send(find);
+});
 
 router.get("/getallrequests", async (req, res) => {
   const find = await RequestWithdrawal.find({});
