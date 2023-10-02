@@ -163,7 +163,7 @@ router.post("/updaterate", middlewares.verifyToken, async (req, res) => {
   console.log(req.user);
   if (req.user.role === "admin") {
     const updateRate = await Rate.findOneAndUpdate(
-      { role: req.body.role },
+      { role: req.user.role },
       {
         $set: {
           rate: req.body.rate,
@@ -173,6 +173,7 @@ router.post("/updaterate", middlewares.verifyToken, async (req, res) => {
         new: true,
       }
     );
+    console.log(updateRate)
   }
   res.send(`Rate has been changed to ${req.body.rate}`);
 });

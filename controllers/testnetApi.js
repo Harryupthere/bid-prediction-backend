@@ -265,7 +265,8 @@ console.log({
          //   'host'
         //)}/api/reset-password?token=${resetToken}`;
 
-        const resetLink = `https://bid-prediction.vercel.app/api/reset-password?token=${resetToken}`;
+       // const resetLink = `https://bid-prediction.vercel.app/api/reset-password?token=${resetToken}`;
+        const resetLink = `https://app.bet-bitcoin.ai/reset-password?token=${resetToken}`;
 
 
         const mailOptions = {
